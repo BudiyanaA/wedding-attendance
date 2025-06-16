@@ -7,7 +7,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
+    <script src="qr-scanner.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         .qr-code-container {
             text-align: center;
@@ -592,26 +593,40 @@
             const video = document.getElementById('qr-video');
             const canvas = document.getElementById('qr-canvas');
             const context = canvas.getContext('2d');
-            
-            currentScanner = setInterval(() => {
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const qrScanner = new QrScanner(
+                video,
+                result => {
+                  console.log('decoded qr code:', result.data)
+                  processQRCode(result.data);
+                  alert('finish')
+                  stopScanner();
+                  qrScanner.stop()
+                },
+                { /* your options or returnDetailedScanResult: true if you're not specifying any other options */ },
+            );
+            qrScanner.start()
+
+            // currentScanner = setInterval(() => {
+            //     if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            //         canvas.width = video.videoWidth;
+            //         canvas.height = video.videoHeight;
+            //         context.drawImage(video, 0, 0, canvas.width, canvas.height);
                     
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+            //         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            //         const code = jsQR(imageData.data, imageData.width, imageData.height);
                     
-                    if (code) {
-                        processQRCode(code.data);
-                        stopScanner();
-                    }
-                }
-            }, 100);
+            //         if (code) {
+            //             processQRCode(code.data);
+            //             stopScanner();
+            //         }
+            //     }
+            // }, 100);
         }
 
         // Simple QR code detection fallback
         function jsQR(data, width, height) {
+            
             // This is a simplified version - in production, use a proper QR code library
             return null; // Placeholder for QR detection
         }
@@ -641,6 +656,7 @@
                 renderGuestList();
                 
             } catch (error) {
+
                 showScanResult('danger', 'QR Code tidak valid', 'Format QR Code tidak dapat dibaca.');
             }
         }
