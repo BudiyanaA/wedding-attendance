@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi Tamu Undangan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
+    <style>
+        .qr-code-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .qr-scanner-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        #qr-video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+        .guest-card {
+            transition: all 0.3s ease;
+        }
+        .guest-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .status-hadir {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+        .status-belum {
+            background: linear-gradient(45deg, #6c757d, #adb5bd);
+            color: white;
+        }
+        .navbar-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        .btn-scan {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+        }
+        .btn-scan:hover {
+            background: linear-gradient(45deg, #ee5a24, #ff6b6b);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 10px;
+            }
+            .card {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-ring"></i> Sistem Absensi Tamu</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showDashboard()">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showGuestManagement()">
+                            <i class="fas fa-users"></i> Kelola Tamu
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showScanner()">
+                            <i class="fas fa-qrcode"></i> Scan QR
+                        </a>
+                    </li>
+                </ul>
+                <span class="navbar-text">
+                    <i class="fas fa-user-circle"></i> <span id="current-role">Petugas Absen</span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Dashboard Section -->
+        <div id="dashboard-section">
+            <div class="row mb-4">
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <h4 id="total-guests">0</h4>
+                            <p class="mb-0">Total Tamu</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h4 id="attended-guests">0</h4>
+                            <p class="mb-0">Sudah Hadir</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <h4 id="pending-guests">0</h4>
+                            <p class="mb-0">Belum Hadir</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-percentage fa-2x mb-2"></i>
+                            <h4 id="attendance-rate">0%</h4>
+                            <p class="mb-0">Tingkat Kehadiran</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="search-guest" placeholder="Cari nama tamu...">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <select class="form-select" id="filter-status">
+                        <option value="">Semua Status</option>
+                        <option value="hadir">Sudah Hadir</option>
+                        <option value="belum">Belum Hadir</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Guest List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> Daftar Tamu</h5>
+                </div>
+                <div class="card-body">
+                    <div id="guest-list" class="row">
+                        <!-- Guest cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guest Management Section -->
+        <div id="guest-management-section" style="display: none;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-user-plus"></i> Tambah/Edit Tamu</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="guest-form">
+                                <input type="hidden" id="edit-guest-id">
+                                <div class="mb-3">
+                                    <label class="form-label">Nama Tamu</label>
+                                    <input type="text" class="form-control" id="guest-name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">No. Telepon</label>
+                                    <input type="tel" class="form-control" id="guest-phone">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Kategori</label>
+                                    <select class="form-select" id="guest-category">
+                                        <option value="keluarga">Keluarga</option>
+                                        <option value="teman">Teman</option>
+                                        <option value="rekan">Rekan Kerja</option>
+                                        <option value="tetangga">Tetangga</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Jumlah Tamu</label>
+                                    <input type="number" class="form-control" id="guest-count" value="1" min="1">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Simpan
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-times"></i> Batal
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5><i class="fas fa-qrcode"></i> Generate QR Code</h5>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-success w-100" onclick="generateAllQRCodes()">
+                                <i class="fas fa-qrcode"></i> Generate Semua QR Code
+                            </button>
+                            <div id="qr-progress" class="mt-3" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar" id="qr-progress-bar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted">Generating QR Codes...</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-users"></i> Daftar Tamu Terdaftar</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Telepon</th>
+                                            <th>Kategori</th>
+                                            <th>Jumlah</th>
+                                            <th>QR Code</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="guest-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanner Section -->
+        <div id="scanner-section" style="display: none;">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header text-center">
+                            <h5><i class="fas fa-camera"></i> Scan QR Code Tamu</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="qr-scanner-container">
+                                <video id="qr-video" style="display: none;"></video>
+                                <canvas id="qr-canvas" style="display: none;"></canvas>
+                                <div id="scanner-status" class="text-center mb-3">
+                                    <button class="btn btn-scan btn-lg" onclick="startScanner()">
+                                        <i class="fas fa-camera"></i> Mulai Scan
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="scan-result" class="mt-4" style="display: none;">
+                                <div class="alert" id="scan-alert"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Actions -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5><i class="fas fa-tools"></i> Aksi Manual</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" class="form-control" id="manual-search" placeholder="Cari nama tamu untuk aksi manual...">
+                                        <button class="btn btn-primary" onclick="searchGuest()">Cari</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="manual-search-results"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div class="modal fade" id="qrModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">QR Code - <span id="qr-guest-name"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="qr-code-display"></div>
+                    <p class="mt-3 text-muted">Tunjukkan QR code ini kepada petugas untuk absensi</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="downloadQRCode()">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple in-memory storage (replace with Firebase in production)
+        let guests = [];
+        let currentScanner = null;
+        let currentGuestForQR = null;
+
+        // Initialize sample data
+        function initializeSampleData() {
+            const sampleGuests = [
+                { id: '1', name: 'Budi Santoso', phone: '081234567890', category: 'keluarga', count: 2, status: 'belum', qrCode: null },
+                { id: '2', name: 'Siti Nurhaliza', phone: '081234567891', category: 'teman', count: 1, status: 'belum', qrCode: null },
+                { id: '3', name: 'Ahmad Rahman', phone: '081234567892', category: 'rekan', count: 3, status: 'belum', qrCode: null }
+            ];
+            
+            guests = sampleGuests;
+            updateDashboard();
+            renderGuestList();
+            renderGuestTable();
+        }
+
+        // Navigation functions
+        function showDashboard() {
+            document.getElementById('dashboard-section').style.display = 'block';
+            document.getElementById('guest-management-section').style.display = 'none';
+            document.getElementById('scanner-section').style.display = 'none';
+            updateNavActive(0);
+            updateDashboard();
+        }
+
+        function showGuestManagement() {
+            document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('guest-management-section').style.display = 'block';
+            document.getElementById('scanner-section').style.display = 'none';
+            updateNavActive(1);
+            renderGuestTable();
+        }
+
+        function showScanner() {
+            document.getElementById('dashboard-section').style.display = 'none';
+            document.getElementById('guest-management-section').style.display = 'none';
+            document.getElementById('scanner-section').style.display = 'block';
+            updateNavActive(2);
+            stopScanner();
+        }
+
+        function updateNavActive(index) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach((link, i) => {
+                link.classList.toggle('active', i === index);
+            });
+        }
+
+        // Guest management functions
+        function addGuest() {
+            const name = document.getElementById('guest-name').value;
+            const phone = document.getElementById('guest-phone').value;
+            const category = document.getElementById('guest-category').value;
+            const count = parseInt(document.getElementById('guest-count').value);
+            const editId = document.getElementById('edit-guest-id').value;
+
+            if (!name.trim()) {
+                alert('Nama tamu harus diisi!');
+                return;
+            }
+
+            if (editId) {
+                // Edit existing guest
+                const guest = guests.find(g => g.id === editId);
+                if (guest) {
+                    guest.name = name;
+                    guest.phone = phone;
+                    guest.category = category;
+                    guest.count = count;
+                }
+            } else {
+                // Add new guest
+                const newGuest = {
+                    id: Date.now().toString(),
+                    name: name,
+                    phone: phone,
+                    category: category,
+                    count: count,
+                    status: 'belum',
+                    qrCode: null,
+                    attendedAt: null
+                };
+                guests.push(newGuest);
+            }
+
+            resetForm();
+            renderGuestTable();
+            updateDashboard();
+            renderGuestList();
+        }
+
+        function editGuest(id) {
+            const guest = guests.find(g => g.id === id);
+            if (guest) {
+                document.getElementById('edit-guest-id').value = guest.id;
+                document.getElementById('guest-name').value = guest.name;
+                document.getElementById('guest-phone').value = guest.phone;
+                document.getElementById('guest-category').value = guest.category;
+                document.getElementById('guest-count').value = guest.count;
+            }
+        }
+
+        function deleteGuest(id) {
+            if (confirm('Yakin ingin menghapus tamu ini?')) {
+                guests = guests.filter(g => g.id !== id);
+                renderGuestTable();
+                updateDashboard();
+                renderGuestList();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('guest-form').reset();
+            document.getElementById('edit-guest-id').value = '';
+        }
+
+        // QR Code functions
+        function generateQRCode(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (!guest) return;
+
+            const qrData = JSON.stringify({
+                id: guest.id,
+                name: guest.name,
+                timestamp: Date.now()
+            });
+
+            const qr = qrcode(0, 'M');
+            qr.addData(qrData);
+            qr.make();
+
+            guest.qrCode = qr.createDataURL(8);
+            
+            renderGuestTable();
+            return guest.qrCode;
+        }
+
+        function showQRCode(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (!guest) return;
+
+            if (!guest.qrCode) {
+                generateQRCode(guestId);
+            }
+
+            currentGuestForQR = guest;
+            document.getElementById('qr-guest-name').textContent = guest.name;
+            document.getElementById('qr-code-display').innerHTML = `<img src="${guest.qrCode}" alt="QR Code" class="img-fluid">`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+            modal.show();
+        }
+
+        function generateAllQRCodes() {
+            const progressBar = document.getElementById('qr-progress-bar');
+            const progressContainer = document.getElementById('qr-progress');
+            
+            progressContainer.style.display = 'block';
+            
+            let completed = 0;
+            const total = guests.length;
+            
+            guests.forEach((guest, index) => {
+                setTimeout(() => {
+                    generateQRCode(guest.id);
+                    completed++;
+                    const percentage = (completed / total) * 100;
+                    progressBar.style.width = percentage + '%';
+                    
+                    if (completed === total) {
+                        setTimeout(() => {
+                            progressContainer.style.display = 'none';
+                            alert('Semua QR Code berhasil di-generate!');
+                        }, 500);
+                    }
+                }, index * 100);
+            });
+        }
+
+        function downloadQRCode() {
+            if (!currentGuestForQR || !currentGuestForQR.qrCode) return;
+            
+            const link = document.createElement('a');
+            link.download = `QR_${currentGuestForQR.name.replace(/\s+/g, '_')}.png`;
+            link.href = currentGuestForQR.qrCode;
+            link.click();
+        }
+
+        // Scanner functions
+        function startScanner() {
+            const video = document.getElementById('qr-video');
+            const statusDiv = document.getElementById('scanner-status');
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    video.play();
+                    
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-camera"></i> Kamera aktif - Arahkan ke QR Code
+                        </div>
+                        <button class="btn btn-danger" onclick="stopScanner()">
+                            <i class="fas fa-stop"></i> Stop Scan
+                        </button>
+                    `;
+                    
+                    // Start QR detection
+                    scanQRCode();
+                })
+                .catch(function(error) {
+                    console.error('Error accessing camera:', error);
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.
+                        </div>
+                        <button class="btn btn-scan btn-lg" onclick="startScanner()">
+                            <i class="fas fa-camera"></i> Coba Lagi
+                        </button>
+                    `;
+                });
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Browser tidak mendukung akses kamera
+                    </div>
+                `;
+            }
+        }
+
+        function stopScanner() {
+            const video = document.getElementById('qr-video');
+            const statusDiv = document.getElementById('scanner-status');
+            
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            video.style.display = 'none';
+            statusDiv.innerHTML = `
+                <button class="btn btn-scan btn-lg" onclick="startScanner()">
+                    <i class="fas fa-camera"></i> Mulai Scan
+                </button>
+            `;
+            
+            if (currentScanner) {
+                clearInterval(currentScanner);
+                currentScanner = null;
+            }
+        }
+
+        function scanQRCode() {
+            const video = document.getElementById('qr-video');
+            const canvas = document.getElementById('qr-canvas');
+            const context = canvas.getContext('2d');
+            
+            currentScanner = setInterval(() => {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        processQRCode(code.data);
+                        stopScanner();
+                    }
+                }
+            }, 100);
+        }
+
+        // Simple QR code detection fallback
+        function jsQR(data, width, height) {
+            // This is a simplified version - in production, use a proper QR code library
+            return null; // Placeholder for QR detection
+        }
+
+        function processQRCode(qrData) {
+            try {
+                const data = JSON.parse(qrData);
+                const guest = guests.find(g => g.id === data.id);
+                
+                if (!guest) {
+                    showScanResult('danger', 'Tamu tidak terdaftar', 'QR Code tidak valid atau tamu tidak ada dalam daftar.');
+                    return;
+                }
+                
+                if (guest.status === 'hadir') {
+                    showScanResult('warning', 'Tamu telah absen', `${guest.name} sudah melakukan absensi sebelumnya.`);
+                    return;
+                }
+                
+                // Mark as attended
+                guest.status = 'hadir';
+                guest.attendedAt = new Date().toLocaleString('id-ID');
+                
+                showScanResult('success', 'Absensi berhasil!', `${guest.name} berhasil diabsen. Jumlah tamu: ${guest.count} orang.`);
+                
+                updateDashboard();
+                renderGuestList();
+                
+            } catch (error) {
+                showScanResult('danger', 'QR Code tidak valid', 'Format QR Code tidak dapat dibaca.');
+            }
+        }
+
+        function showScanResult(type, title, message) {
+            const resultDiv = document.getElementById('scan-result');
+            const alertDiv = document.getElementById('scan-alert');
+            
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <h5><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i> ${title}</h5>
+                <p class="mb-0">${message}</p>
+            `;
+            
+            resultDiv.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Manual actions
+        function searchGuest() {
+            const searchTerm = document.getElementById('manual-search').value.toLowerCase();
+            const results = guests.filter(g => 
+                g.name.toLowerCase().includes(searchTerm) || 
+                g.phone.includes(searchTerm)
+            );
+            
+            const resultsDiv = document.getElementById('manual-search-results');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="alert alert-warning">Tidak ada tamu yang ditemukan.</div>';
+                return;
+            }
+            
+            let html = '<div class="mt-3">';
+            results.forEach(guest => {
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h6>${guest.name}</h6>
+                                    <small class="text-muted">${guest.phone} | ${guest.category} | ${guest.count} orang</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge ${guest.status === 'hadir' ? 'bg-success' : 'bg-secondary'}">
+                                        ${guest.status === 'hadir' ? 'Sudah Hadir' : 'Belum Hadir'}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    ${guest.status === 'belum' ? 
+                                        `<button class="btn btn-success btn-sm" onclick="manualCheckIn('${guest.id}')">
+                                            <i class="fas fa-check"></i> Absen
+                                        </button>` :
+                                        `<button class="btn btn-warning btn-sm" onclick="resetAttendance('${guest.id}')">
+                                            <i class="fas fa-undo"></i> Reset
+                                        </button>`
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function manualCheckIn(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (guest && guest.status === 'belum') {
+                guest.status = 'hadir';
+                guest.attendedAt = new Date().toLocaleString('id-ID');
+                
+                updateDashboard();
+                renderGuestList();
+                searchGuest(); // Refresh search results
+                
+                alert(`${guest.name} berhasil diabsen secara manual.`);
+            }
+        }
+
+        function resetAttendance(guestId) {
+            if (confirm('Yakin ingin mereset kehadiran tamu ini?')) {
+                const guest = guests.find(g => g.id === guestId);
+                if (guest) {
+                    guest.status = 'belum';
+                    guest.attendedAt = null;
+                    
+                    updateDashboard();
+                    renderGuestList();
+                    searchGuest(); // Refresh search results
+                    
+                    alert(`Kehadiran ${guest.name} berhasil direset.`);
+                }
+            }
+        }
+
+        // Dashboard functions
+        function updateDashboard() {
+            const total = guests.length;
+            const attended = guests.filter(g => g.status === 'hadir').length;
+            const pending = total - attended;
+            const rate = total > 0 ? Math.round((attended / total) * 100) : 0;
+            
+            document.getElementById('total-guests').textContent = total;
+            document.getElementById('attended-guests').textContent = attended;
+            document.getElementById('pending-guests').textContent = pending;
+            document.getElementById('attendance-rate').textContent = rate + '%';
+        }
+
+        function renderGuestList() {
+            const searchTerm = document.getElementById('search-guest').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-status').value;
+            
+            let filteredGuests = guests.filter(guest => {
+                const matchesSearch = guest.name.toLowerCase().includes(searchTerm) || 
+                                    guest.phone.includes(searchTerm);
+                const matchesStatus = !statusFilter || guest.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
+            
+            const guestListDiv = document.getElementById('guest-list');
+            
+            if (filteredGuests.length === 0) {
+                guestListDiv.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle"></i> Tidak ada tamu yang ditemukan.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            filteredGuests.forEach(guest => {
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card guest-card ${guest.status === 'hadir' ? 'status-hadir' : 'status-belum'}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">${guest.name}</h6>
+                                    <span class="badge ${guest.status === 'hadir' ? 'bg-light text-dark' : 'bg-dark'}">
+                                        ${guest.status === 'hadir' ? 'Hadir' : 'Belum'}
+                                    </span>
+                                </div>
+                                <p class="card-text small mb-2">
+                                    <i class="fas fa-phone"></i> ${guest.phone || 'Tidak ada'}<br>
+                                    <i class="fas fa-tag"></i> ${guest.category}<br>
+                                    <i class="fas fa-users"></i> ${guest.count} orang
+                                    ${guest.attendedAt ? `<br><i class="fas fa-clock"></i> ${guest.attendedAt}` : ''}
+                                </p>
+                                <div class="btn-group w-100" role="group">
+                                    ${guest.status === 'belum' ? 
+                                        `<button class="btn btn-sm btn-success" onclick="manualCheckIn('${guest.id}')">
+                                            <i class="fas fa-check"></i> Absen
+                                        </button>` :
+                                        `<button class="btn btn-sm btn-warning" onclick="resetAttendance('${guest.id}')">
+                                            <i class="fas fa-undo"></i> Reset
+                                        </button>`
+                                    }
+                                    <button class="btn btn-sm btn-info" onclick="showQRCode('${guest.id}')">
+                                        <i class="fas fa-qrcode"></i> QR
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            guestListDiv.innerHTML = html;
+        }
+
+        function renderGuestTable() {
+            const tableBody = document.getElementById('guest-table-body');
+            
+            if (guests.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="fas fa-info-circle"></i> Belum ada tamu yang terdaftar
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            guests.forEach(guest => {
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${guest.name}</strong>
+                            ${guest.status === 'hadir' ? '<br><small class="text-success">✓ Hadir</small>' : '<br><small class="text-muted">Belum hadir</small>'}
+                        </td>
+                        <td>${guest.phone || '-'}</td>
+                        <td><span class="badge bg-secondary">${guest.category}</span></td>
+                        <td>${guest.count}</td>
+                        <td>
+                            ${guest.qrCode ? 
+                                '<span class="text-success"><i class="fas fa-check-circle"></i> Generated</span>' : 
+                                '<span class="text-muted"><i class="fas fa-times-circle"></i> Belum</span>'
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editGuest('${guest.id}')" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="showQRCode('${guest.id}')" title="Lihat QR">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteGuest('${guest.id}')" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        // Event listeners
+        document.getElementById('guest-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addGuest();
+        });
+
+        document.getElementById('search-guest').addEventListener('input', renderGuestList);
+        document.getElementById('filter-status').addEventListener('change', renderGuestList);
+
+        // Alternative QR scanner using device camera (fallback method)
+        function alternativeQRScan() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Here you would use a QR code library to decode the image
+                        // For demo purposes, we'll simulate a successful scan
+                        setTimeout(() => {
+                            // Simulate scanning the first guest's QR code
+                            if (guests.length > 0) {
+                                const firstGuest = guests.find(g => g.status === 'belum');
+                                if (firstGuest) {
+                                    const qrData = JSON.stringify({
+                                        id: firstGuest.id,
+                                        name: firstGuest.name,
+                                        timestamp: Date.now()
+                                    });
+                                    processQRCode(qrData);
+                                }
+                            }
+                        }, 1000);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            input.click();
+        }
+
+        // Enhanced scanner with fallback options
+        function enhancedStartScanner() {
+            const statusDiv = document.getElementById('scanner-status');
+            
+            // Try camera first
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                startScanner();
+            } else {
+                // Fallback to file input
+                statusDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-camera"></i> Kamera tidak tersedia. Gunakan opsi alternatif:
+                    </div>
+                    <button class="btn btn-primary" onclick="alternativeQRScan()">
+                        <i class="fas fa-upload"></i> Upload Foto QR Code
+                    </button>
+                    <hr>
+                    <div class="mt-3">
+                        <h6>Demo Mode:</h6>
+                        <button class="btn btn-success btn-sm" onclick="simulateQRScan('success')">
+                            <i class="fas fa-check"></i> Simulasi Sukses
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="simulateQRScan('duplicate')">
+                            <i class="fas fa-exclamation"></i> Simulasi Sudah Absen
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="simulateQRScan('invalid')">
+                            <i class="fas fa-times"></i> Simulasi Invalid
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function simulateQRScan(type) {
+            switch(type) {
+                case 'success':
+                    const availableGuest = guests.find(g => g.status === 'belum');
+                    if (availableGuest) {
+                        const qrData = JSON.stringify({
+                            id: availableGuest.id,
+                            name: availableGuest.name,
+                            timestamp: Date.now()
+                        });
+                        processQRCode(qrData);
+                    } else {
+                        showScanResult('warning', 'Semua tamu sudah hadir', 'Tidak ada tamu yang belum melakukan absensi.');
+                    }
+                    break;
+                case 'duplicate':
+                    const attendedGuest = guests.find(g => g.status === 'hadir');
+                    if (attendedGuest) {
+                        const qrData = JSON.stringify({
+                            id: attendedGuest.id,
+                            name: attendedGuest.name,
+                            timestamp: Date.now()
+                        });
+                        processQRCode(qrData);
+                    } else {
+                        showScanResult('info', 'Simulasi tidak tersedia', 'Belum ada tamu yang hadir untuk simulasi duplicate.');
+                    }
+                    break;
+                case 'invalid':
+                    processQRCode('invalid-qr-code-data');
+                    break;
+            }
+        }
+
+        // Bulk operations
+        function bulkCheckIn() {
+            if (confirm('Yakin ingin menandai semua tamu sebagai hadir?')) {
+                guests.forEach(guest => {
+                    if (guest.status === 'belum') {
+                        guest.status = 'hadir';
+                        guest.attendedAt = new Date().toLocaleString('id-ID');
+                    }
+                });
+                
+                updateDashboard();
+                renderGuestList();
+                alert('Semua tamu berhasil ditandai hadir!');
+            }
+        }
+
+        function bulkReset() {
+            if (confirm('Yakin ingin mereset semua kehadiran tamu?')) {
+                guests.forEach(guest => {
+                    guest.status = 'belum';
+                    guest.attendedAt = null;
+                });
+                
+                updateDashboard();
+                renderGuestList();
+                alert('Semua kehadiran tamu berhasil direset!');
+            }
+        }
+
+        // Export functions
+        function exportGuestList() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Nama,Telepon,Kategori,Jumlah,Status,Waktu Hadir\n";
+            
+            guests.forEach(guest => {
+                csvContent += `"${guest.name}","${guest.phone || ''}","${guest.category}","${guest.count}","${guest.status}","${guest.attendedAt || ''}"\n`;
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `daftar_tamu_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialize the application
+        function initApp() {
+            initializeSampleData();
+            showDashboard();
+            
+            // Add bulk action buttons to dashboard
+            const dashboardCard = document.querySelector('#dashboard-section .card-header');
+            if (dashboardCard) {
+                dashboardCard.innerHTML += `
+                    <div class="float-end">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-success" onclick="bulkCheckIn()" title="Tandai Semua Hadir">
+                                <i class="fas fa-check-double"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="bulkReset()" title="Reset Semua">
+                                <i class="fas fa-undo-alt"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="exportGuestList()" title="Export CSV">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Update scanner start function
+            const scannerSection = document.getElementById('scanner-section');
+            const startButton = scannerSection.querySelector('button[onclick="startScanner()"]');
+            if (startButton) {
+                startButton.setAttribute('onclick', 'enhancedStartScanner()');
+            }
+        }
+
+        // Start the application when page loads
+        window.addEventListener('load', initApp);
+        
+        // Service Worker for offline functionality (optional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        // Print QR codes function
+        function printAllQRCodes() {
+            const printWindow = window.open('', '_blank');
+            let printContent = `
+                <html>
+                <head>
+                    <title>QR Codes - Tamu Undangan</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .qr-item { 
+                            display: inline-block; 
+                            margin: 20px; 
+                            text-align: center; 
+                            page-break-inside: avoid;
+                            border: 1px solid #ddd;
+                            padding: 15px;
+                            border-radius: 8px;
+                        }
+                        .qr-item img { width: 150px; height: 150px; }
+                        .qr-item h4 { margin: 10px 0 5px 0; }
+                        .qr-item p { margin: 0; font-size: 12px; color: #666; }
+                        @media print {
+                            .qr-item { break-inside: avoid; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>QR Codes Tamu Undangan</h1>
+            `;
+            
+            guests.forEach(guest => {
+                if (guest.qrCode) {
+                    printContent += `
+                        <div class="qr-item">
+                            <img src="${guest.qrCode}" alt="QR Code ${guest.name}">
+                            <h4>${guest.name}</h4>
+                            <p>${guest.category} - ${guest.count} orang</p>
+                        </div>
+                    `;
+                }
+            });
+            
+            printContent += `
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+            }, 1000);
+        }
+
+    </script>
+</body>
+</html>
