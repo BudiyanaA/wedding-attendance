@@ -448,11 +448,31 @@
                     guest.phone = phone;
                     guest.category = category;
                     guest.count = count;
+
+              db.collection('guests').doc(editId).update({
+                name: name,
+                phone: phone,
+                category: category,
+                count: count,
+              })
+                .then(() => {
+                    // showStatus('Task updated successfully!');
+                    console.log('Task updated successfully!')
+                    // $('#taskForm')[0].reset();
+                    // $('#cancelEdit').hide();
+                    // currentEditId = null;
+                    // loadTasks(); // Refresh the list
+                })
+                .catch((error) => {
+                    console.error('Error updating task:', error);
+                    // showStatus('Error updating task: ' + error.message, 'error');
+                });
+
                 }
             } else {
                 // Add new guest
                 const newGuest = {
-                    id: Date.now().toString(),
+                    // id: Date.now().toString(),
                     name: name,
                     phone: phone,
                     category: category,
@@ -462,6 +482,17 @@
                     attendedAt: null
                 };
                 guests.push(newGuest);
+
+                db.collection('guests').add(newGuest)
+                .then((docRef) => {
+                    // showStatus(`Task added successfully! ID: ${docRef.id}`);
+                    // $('#taskForm')[0].reset();
+                    // loadTasks(); // Refresh the list
+                })
+                .catch((error) => {
+                    console.error('Error adding task:', error);
+                    // showStatus('Error adding task: ' + error.message, 'error');
+                });
             }
 
             resetForm();
@@ -484,6 +515,18 @@
         function deleteGuest(id) {
             if (confirm('Yakin ingin menghapus tamu ini?')) {
                 guests = guests.filter(g => g.id !== id);
+                console.log(id)
+                db.collection('guests').doc(id).delete()
+                    .then(() => {
+                        console.log('Task deleted successfully!')
+                        // showStatus('Task deleted successfully!');
+                        // loadTasks(); // Refresh the list
+                    })
+                    .catch((error) => {
+                        console.error('Error deleting task:', error);
+                        // showStatus('Error deleting task: ' + error.message, 'error');
+                    });
+
                 renderGuestTable();
                 updateDashboard();
                 renderGuestList();
