@@ -327,21 +327,69 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!---<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-firestore-compat.min.js"></script>
+
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtkvBory4NIk2tapbDeyQUnsDmR6doilI",
+            authDomain: "wedding-attendance-2b9b6.firebaseapp.com",
+            projectId: "wedding-attendance-2b9b6",
+            storageBucket: "wedding-attendance-2b9b6.firebasestorage.app",
+            messagingSenderId: "976857966400",
+            appId: "1:976857966400:web:ae057017e788e83f16bca5"
+        };
+
+        let db;
+        let currentEditId = null;
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
+
+
         // Simple in-memory storage (replace with Firebase in production)
-        let guests = [];
+        var guests = [];
         let currentScanner = null;
         let currentGuestForQR = null;
 
+        db.collection('guests')
+                .get()
+                .then((querySnapshot) => {
+                    const tasks = [];
+                    querySnapshot.forEach((doc) => {
+                        guests.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                        console.log(`${doc.id} - ${doc.data().name}`)
+                    });
+                    // displayTasks(tasks);
+                    // showStatus(`Loaded ${tasks.length} tasks`);
+                    console.log(guests)
+                    initializeSampleData()
+                })
+                .catch((error) => {
+                    console.error('Error loading tasks:', error);
+                    // $('#tasksContainer').html('<div class="loading">Error loading tasks</div>');
+                    // showStatus('Error loading tasks: ' + error.message, 'error');
+                });
+
         // Initialize sample data
         function initializeSampleData() {
-            const sampleGuests = [
-                { id: '1', name: 'Budi Santoso', phone: '081234567890', category: 'keluarga', count: 2, status: 'belum', qrCode: null },
-                { id: '2', name: 'Siti Nurhaliza', phone: '081234567891', category: 'teman', count: 1, status: 'belum', qrCode: null },
-                { id: '3', name: 'Ahmad Rahman', phone: '081234567892', category: 'rekan', count: 3, status: 'belum', qrCode: null }
-            ];
+            // const sampleGuests = [
+            //     { id: '1', name: 'Budi Santoso', phone: '081234567890', category: 'keluarga', count: 2, status: 'belum', qrCode: null },
+            //     { id: '2', name: 'Siti Nurhaliza', phone: '081234567891', category: 'teman', count: 1, status: 'belum', qrCode: null },
+            //     { id: '3', name: 'Ahmad Rahman', phone: '081234567892', category: 'rekan', count: 3, status: 'belum', qrCode: null }
+            // ];
             
-            guests = sampleGuests;
+            // guests = sampleGuests;
             updateDashboard();
             renderGuestList();
             renderGuestTable();
@@ -452,11 +500,12 @@
             const guest = guests.find(g => g.id === guestId);
             if (!guest) return;
 
-            const qrData = JSON.stringify({
-                id: guest.id,
-                name: guest.name,
-                timestamp: Date.now()
-            });
+            // const qrData = JSON.stringify({
+            //     id: guest.id,
+            //     name: guest.name,
+            //     timestamp: Date.now()
+            // });
+            const qrData = guestId;
 
             const qr = qrcode(0, 'M');
             qr.addData(qrData);
@@ -633,8 +682,10 @@
 
         function processQRCode(qrData) {
             try {
-                const data = JSON.parse(qrData);
-                const guest = guests.find(g => g.id === data.id);
+                // const data = JSON.parse(qrData);
+                // const guest = guests.find(g => g.id === data.id);
+                // const data = JSON.parse(qrData);
+                const guest = guests.find(g => g.id === qrData);
                 
                 if (!guest) {
                     showScanResult('danger', 'Tamu tidak terdaftar', 'QR Code tidak valid atau tamu tidak ada dalam daftar.');
