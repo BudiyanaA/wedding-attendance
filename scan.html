@@ -238,10 +238,11 @@
                   stopScanner();
                   qrScanner.stop()
                 },
+                {},
             );
 
             // currentScanner = setInterval(() => {
-                qrScanner.start()
+            qrScanner.start()
             // }, 100);
         }
 
@@ -271,7 +272,7 @@
             try {
                 // const guest = guests.find(g => g.id === qrData);
                 // let guest = null
-                alert(qrData)
+                // alert(qrData)
                 db.collection(collection).doc(qrData).get()
                   .then((doc) => {
                       if (doc.exists) {
