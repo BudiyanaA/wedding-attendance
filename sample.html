@@ -1145,26 +1145,6 @@
             initializeSampleData();
             showDashboard();
             
-            // Add bulk action buttons to dashboard
-            const dashboardCard = document.querySelector('#dashboard-section .card-header');
-            if (dashboardCard) {
-                dashboardCard.innerHTML += `
-                    <div class="float-end">
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-success" onclick="bulkCheckIn()" title="Tandai Semua Hadir">
-                                <i class="fas fa-check-double"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-warning" onclick="bulkReset()" title="Reset Semua">
-                                <i class="fas fa-undo-alt"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-info" onclick="exportGuestList()" title="Export CSV">
-                                <i class="fas fa-download"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-            
             // Update scanner start function
             const scannerSection = document.getElementById('scanner-section');
             const startButton = scannerSection.querySelector('button[onclick="startScanner()"]');

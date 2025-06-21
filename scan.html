@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi Tamu Undangan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="qr-scanner.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        .qr-code-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .qr-scanner-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        #qr-video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+        .guest-card {
+            transition: all 0.3s ease;
+        }
+        .guest-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .status-hadir {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+        .status-belum {
+            background: linear-gradient(45deg, #6c757d, #adb5bd);
+            color: white;
+        }
+        .navbar-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        .btn-scan {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+        }
+        .btn-scan:hover {
+            background: linear-gradient(45deg, #ee5a24, #ff6b6b);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 10px;
+            }
+            .card {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-ring"></i> Sistem Absensi Tamu</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showDashboard()">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showGuestManagement()">
+                            <i class="fas fa-users"></i> Kelola Tamu
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showScanner()">
+                            <i class="fas fa-qrcode"></i> Scan QR
+                        </a>
+                    </li>
+                </ul>
+                <span class="navbar-text">
+                    <i class="fas fa-user-circle"></i> <span id="current-role">Petugas Absen</span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Scanner Section -->
+        <div id="scanner-section">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header text-center">
+                            <h5><i class="fas fa-camera"></i> Scan QR Code Tamu</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="qr-scanner-container">
+                                <video id="qr-video" style="display: none;"></video>
+                                <canvas id="qr-canvas" style="display: none;"></canvas>
+                                <div id="scanner-status" class="text-center mb-3">
+                                    <button class="btn btn-scan btn-lg" onclick="startScanner()">
+                                        <i class="fas fa-camera"></i> Mulai Scan
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="scan-result" class="mt-4" style="display: none;">
+                                <div class="alert" id="scan-alert"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Actions -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5><i class="fas fa-tools"></i> Aksi Manual</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" class="form-control" id="manual-search" placeholder="Cari nama tamu untuk aksi manual...">
+                                        <button class="btn btn-primary" onclick="searchGuest()">Cari</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="manual-search-results"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-firestore-compat.min.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtkvBory4NIk2tapbDeyQUnsDmR6doilI",
+            authDomain: "wedding-attendance-2b9b6.firebaseapp.com",
+            projectId: "wedding-attendance-2b9b6",
+            storageBucket: "wedding-attendance-2b9b6.firebasestorage.app",
+            messagingSenderId: "976857966400",
+            appId: "1:976857966400:web:ae057017e788e83f16bca5"
+        };
+        const collection = 'testing'
+
+        let currentScanner = null;
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
+
+        function updateNavActive(index) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach((link, i) => {
+                link.classList.toggle('active', i === index);
+            });
+        }
+
+        // Scanner functions
+        function startScanner() {
+            const video = document.getElementById('qr-video');
+            const statusDiv = document.getElementById('scanner-status');
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    video.play();
+                    
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-camera"></i> Kamera aktif - Arahkan ke QR Code
+                        </div>
+                        <button class="btn btn-danger" onclick="stopScanner()">
+                            <i class="fas fa-stop"></i> Stop Scan
+                        </button>
+                    `;
+                    
+                    // Start QR detection
+                    scanQRCode();
+                })
+                .catch(function(error) {
+                    console.error('Error accessing camera:', error);
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.
+                        </div>
+                        <button class="btn btn-scan btn-lg" onclick="startScanner()">
+                            <i class="fas fa-camera"></i> Coba Lagi
+                        </button>
+                    `;
+                });
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        Browser tidak mendukung akses kamera
+                    </div>
+                `;
+            }
+        }
+
+        function scanQRCode() {
+            const video = document.getElementById('qr-video');
+            const canvas = document.getElementById('qr-canvas');
+            const context = canvas.getContext('2d');
+
+            const qrScanner = new QrScanner(
+                video,
+                result => {
+                  console.log('decoded qr code:', result.data)
+                  processQRCode(result.data);
+                  stopScanner();
+                  qrScanner.stop()
+                },
+            );
+
+            currentScanner = setInterval(() => {
+                qrScanner.start()
+            }, 100);
+        }
+
+        function stopScanner() {
+            const video = document.getElementById('qr-video');
+            const statusDiv = document.getElementById('scanner-status');
+            
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            video.style.display = 'none';
+            statusDiv.innerHTML = `
+                <button class="btn btn-scan btn-lg" onclick="startScanner()">
+                    <i class="fas fa-camera"></i> Mulai Scan
+                </button>
+            `;
+            
+            if (currentScanner) {
+                clearInterval(currentScanner);
+                currentScanner = null;
+            }
+        }
+
+        function processQRCode(qrData) {
+            try {
+                // const guest = guests.find(g => g.id === qrData);
+                // let guest = null
+
+                db.collection(collection).doc(qrData).get()
+                  .then((doc) => {
+                      if (doc.exists) {
+                          const guest = {
+                              id: doc.id,
+                              ...doc.data()
+                          };
+                          console.log(`Guest found: ${guest.name}`);
+
+                          if (guest.status === 'hadir') {
+                              showScanResult('warning', 'Tamu telah absen', `${guest.name} sudah melakukan absensi sebelumnya.`);
+                              return;
+                          }
+
+                          // Update Guest
+                          db.collection(collection).doc(qrData).update({
+                              status: 'hadir',
+                              attendedAt: new Date().toLocaleString('id-ID'),
+                            })
+                              .then(() => {
+                                  console.log('Guest updated successfully!')
+                                  showScanResult('success', 'Absensi berhasil!', `${guest.name} berhasil diabsen. Jumlah tamu: ${guest.pax} orang.`);
+                              })
+                              .catch((error) => {
+                                  console.error('Error updating guest:', error);
+                              });
+
+                      } else {
+                          console.error('No guest found with that ID', 'error');
+                          showScanResult('danger', 'Tamu tidak terdaftar', 'QR Code tidak valid atau tamu tidak ada dalam daftar.');
+                          return;
+                      }
+                  })
+                  .catch((error) => {
+                      console.error('Error getting task:', error);
+                  });
+
+                // Mark as attended
+                // guest.status = 'hadir';
+                // guest.attendedAt = new Date().toLocaleString('id-ID');
+
+                // updateDashboard();
+                // renderGuestList();
+                
+            } catch (error) {
+                showScanResult('danger', 'QR Code tidak valid', 'Format QR Code tidak dapat dibaca.');
+            }
+        }
+
+        function showScanResult(type, title, message) {
+            const resultDiv = document.getElementById('scan-result');
+            const alertDiv = document.getElementById('scan-alert');
+            
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <h5><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i> ${title}</h5>
+                <p class="mb-0">${message}</p>
+            `;
+            
+            resultDiv.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            // setTimeout(() => {
+            //     resultDiv.style.display = 'none';
+            // }, 5000);
+        }
+
+        // Initialize the application
+        function initApp() {
+            updateNavActive(2);
+        }
+      
+        // Start the application when page loads
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html>
