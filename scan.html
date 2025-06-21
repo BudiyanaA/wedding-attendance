@@ -271,7 +271,7 @@
             try {
                 // const guest = guests.find(g => g.id === qrData);
                 // let guest = null
-
+                alert(qrData)
                 db.collection(collection).doc(qrData).get()
                   .then((doc) => {
                       if (doc.exists) {
