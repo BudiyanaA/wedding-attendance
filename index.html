@@ -204,7 +204,7 @@
             messagingSenderId: "976857966400",
             appId: "1:976857966400:web:ae057017e788e83f16bca5"
         };
-        const collection = 'testing'
+        const collection = 'vina_fisik'
 
         let db;
         let guests = [];
@@ -423,24 +423,24 @@
             updateNavActive(0);
 
             // Add bulk action buttons to dashboard
-            // const dashboardCard = document.querySelector('#dashboard-section .card-header');
-            // if (dashboardCard) {
-            //     dashboardCard.innerHTML += `
-            //         <div class="float-end">
-            //             <div class="btn-group" role="group">
-            //                 <button class="btn btn-sm btn-outline-success" onclick="bulkCheckIn()" title="Tandai Semua Hadir">
-            //                     <i class="fas fa-check-double"></i>
-            //                 </button>
-            //                 <button class="btn btn-sm btn-outline-warning" onclick="bulkReset()" title="Reset Semua">
-            //                     <i class="fas fa-undo-alt"></i>
-            //                 </button>
-            //                 <button class="btn btn-sm btn-outline-info" onclick="exportGuestList()" title="Export CSV">
-            //                     <i class="fas fa-download"></i>
-            //                 </button>
-            //             </div>
-            //         </div>
-            //     `;
-            // }
+            const dashboardCard = document.querySelector('#dashboard-section .card-header');
+            if (dashboardCard) {
+                dashboardCard.innerHTML += `
+                    <div class="float-end">
+                        <div class="btn-group" role="group">
+                            <!-- <button class="btn btn-sm btn-outline-success" onclick="bulkCheckIn()" title="Tandai Semua Hadir">
+                                <i class="fas fa-check-double"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="bulkReset()" title="Reset Semua">
+                                <i class="fas fa-undo-alt"></i>
+                            </button> -->
+                            <button class="btn btn-sm btn-outline-info" onclick="exportGuestList()" title="Export CSV">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
         }
       
         // Start the application when page loads

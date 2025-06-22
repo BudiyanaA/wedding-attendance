@@ -97,79 +97,8 @@
     </nav>
 
     <div class="container-fluid mt-4">
-        <!-- Dashboard Section -->
-        <div id="dashboard-section">
-            <div class="row mb-4">
-                <div class="col-md-6 col-lg-3 mb-3">
-                    <div class="card stats-card">
-                        <div class="card-body text-center">
-                            <i class="fas fa-users fa-2x mb-2"></i>
-                            <h4 id="total-guests">0</h4>
-                            <p class="mb-0">Total Tamu</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3 mb-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body text-center">
-                            <i class="fas fa-check-circle fa-2x mb-2"></i>
-                            <h4 id="attended-guests">0</h4>
-                            <p class="mb-0">Sudah Hadir</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3 mb-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body text-center">
-                            <i class="fas fa-clock fa-2x mb-2"></i>
-                            <h4 id="pending-guests">0</h4>
-                            <p class="mb-0">Belum Hadir</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3 mb-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body text-center">
-                            <i class="fas fa-percentage fa-2x mb-2"></i>
-                            <h4 id="attendance-rate">0%</h4>
-                            <p class="mb-0">Tingkat Kehadiran</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Search and Filter -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" id="search-guest" placeholder="Cari nama tamu...">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <select class="form-select" id="filter-status">
-                        <option value="">Semua Status</option>
-                        <option value="hadir">Sudah Hadir</option>
-                        <option value="belum">Belum Hadir</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Guest List -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-list"></i> Daftar Tamu</h5>
-                </div>
-                <div class="card-body">
-                    <div id="guest-list" class="row">
-                        <!-- Guest cards will be inserted here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Guest Management Section -->
-        <div id="guest-management-section" style="display: none;">
+        <div id="guest-management-section">
             <div class="row">
                 <div class="col-md-4">
                     <div class="card">
@@ -239,9 +168,9 @@
                                     <thead>
                                         <tr>
                                             <th>Nama</th>
-                                            <th>Telepon</th>
+                                            <th>ID</th>
                                             <th>Kategori</th>
-                                            <th>Jumlah</th>
+                                            <th>Pax</th>
                                             <th>QR Code</th>
                                             <th>Aksi</th>
                                         </tr>
@@ -250,53 +179,6 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Scanner Section -->
-        <div id="scanner-section" style="display: none;">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header text-center">
-                            <h5><i class="fas fa-camera"></i> Scan QR Code Tamu</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="qr-scanner-container">
-                                <video id="qr-video" style="display: none;"></video>
-                                <canvas id="qr-canvas" style="display: none;"></canvas>
-                                <div id="scanner-status" class="text-center mb-3">
-                                    <button class="btn btn-scan btn-lg" onclick="startScanner()">
-                                        <i class="fas fa-camera"></i> Mulai Scan
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div id="scan-result" class="mt-4" style="display: none;">
-                                <div class="alert" id="scan-alert"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Manual Actions -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h5><i class="fas fa-tools"></i> Aksi Manual</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                        <input type="text" class="form-control" id="manual-search" placeholder="Cari nama tamu untuk aksi manual...">
-                                        <button class="btn btn-primary" onclick="searchGuest()">Cari</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="manual-search-results"></div>
                         </div>
                     </div>
                 </div>
@@ -330,5 +212,147 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-firestore-compat.min.js"></script>
 
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtkvBory4NIk2tapbDeyQUnsDmR6doilI",
+            authDomain: "wedding-attendance-2b9b6.firebaseapp.com",
+            projectId: "wedding-attendance-2b9b6",
+            storageBucket: "wedding-attendance-2b9b6.firebasestorage.app",
+            messagingSenderId: "976857966400",
+            appId: "1:976857966400:web:ae057017e788e83f16bca5"
+        };
+        const collection = 'testing'
+
+        let db;
+        let guests = [];
+
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
+
+        // Initialize sample data
+        function initializeData() {
+              guests = []
+              db.collection(collection)
+                .get()
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        guests.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    console.log(`Loaded ${guests.length} guests`);
+                    renderGuestTable();
+                })
+                .catch((error) => {
+                    console.error('Error loading tasks:', error);
+                });
+        }
+
+        function updateNavActive(index) {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach((link, i) => {
+                link.classList.toggle('active', i === index);
+            });
+        }
+
+        function renderGuestTable() {
+            const tableBody = document.getElementById('guest-table-body');
+            
+            if (guests.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="fas fa-info-circle"></i> Belum ada tamu yang terdaftar
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            guests.forEach(guest => {
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${guest.name}</strong>
+                            ${guest.status === 'hadir' ? '<br><small class="text-success">✓ Hadir</small>' : '<br><small class="text-muted">Belum hadir</small>'}
+                        </td>
+                        <td>${guest.id || '-'}</td>
+                        <td><span class="badge bg-secondary">${guest.category}</span></td>
+                        <td>${guest.pax}</td>
+                        <td>
+                            ${guest.qrCode ? 
+                                '<span class="text-success"><i class="fas fa-check-circle"></i> Generated</span>' : 
+                                '<span class="text-muted"><i class="fas fa-times-circle"></i> Belum</span>'
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editGuest('${guest.id}')" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="showQRCode('${guest.id}')" title="Lihat QR">
+                                    <i class="fas fa-qrcode"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteGuest('${guest.id}')" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        function showQRCode(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (!guest) return;
+
+            if (!guest.qrCode) {
+                generateQRCode(guestId);
+            }
+
+            currentGuestForQR = guest;
+            document.getElementById('qr-guest-name').textContent = guest.name;
+            document.getElementById('qr-code-display').innerHTML = `<img src="${guest.qrCode}" alt="QR Code" class="img-fluid">`;
+            
+            const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+            modal.show();
+        }
+
+        // QR Code functions
+        function generateQRCode(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (!guest) return;
+
+            const qrData = guestId;
+
+            const qr = qrcode(0, 'M');
+            qr.addData(qrData);
+            qr.make();
+
+            guest.qrCode = qr.createDataURL(8);
+            
+            renderGuestTable();
+            return guest.qrCode;
+        }
+
+        // Initialize the application
+        function initApp() {
+            initializeData();
+            updateNavActive(1);
+        }
+      
+        // Start the application when page loads
+        window.addEventListener('load', initApp);
+    </script>
 </body>
 </html>

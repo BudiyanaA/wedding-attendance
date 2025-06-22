@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+    <div id="image-list">
+      <img src="https://fastly.picsum.photos/id/237/536/354.jpg?hmac=i0yVXW1ORpyCZpQ-CknuyV-jbtU7_x9EBQVhvT5aRr0" alt="Image 1" style="width: 300px;">
+      <img src="https://fastly.picsum.photos/id/237/536/354.jpg?hmac=i0yVXW1ORpyCZpQ-CknuyV-jbtU7_x9EBQVhvT5aRr0" alt="Image 2" style="width: 300px;">
+      <img src="https://fastly.picsum.photos/id/237/536/354.jpg?hmac=i0yVXW1ORpyCZpQ-CknuyV-jbtU7_x9EBQVhvT5aRr0" alt="Image 3" style="width: 300px;">
+    </div>
+    
+    <button onclick="generatePdf()">Print PDF</button>
+
+    <script>
+  async function generatePdf() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    const images = document.querySelectorAll('#image-list img');
+    let y = 10;
+
+    for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+
+        // Convert image to canvas using html2canvas
+        const canvas = await html2canvas(img, {
+            backgroundColor: null,
+            scale: 2
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        if (y + pdfHeight > pdf.internal.pageSize.getHeight()) {
+            pdf.addPage();
+            y = 10;
+        }
+
+        pdf.addImage(imgData, 'JPEG', 10, y, pdfWidth - 20, pdfHeight);
+        y += pdfHeight + 10;
+    }
+
+    pdf.save('image-list.pdf');
+}
+
+    </script>
+</body>
+</html>
