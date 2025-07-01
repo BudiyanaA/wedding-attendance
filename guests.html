@@ -112,7 +112,7 @@
                                     <label class="form-label">Nama Tamu</label>
                                     <input type="text" class="form-control" id="guest-name" required>
                                 </div>
-                                <div class="mb-3">
+                                <!-- <div class="mb-3">
                                     <label class="form-label">No. Telepon</label>
                                     <input type="tel" class="form-control" id="guest-phone">
                                 </div>
@@ -128,7 +128,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Jumlah Tamu</label>
                                     <input type="number" class="form-control" id="guest-count" value="1" min="1">
-                                </div>
+                                </div> -->
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Simpan
                                 </button>
@@ -221,7 +221,7 @@
             messagingSenderId: "976857966400",
             appId: "1:976857966400:web:ae057017e788e83f16bca5"
         };
-        const collection = 'guests'
+        const collection = 'first'
 
         let db;
         let guests = [];
@@ -343,6 +343,94 @@
             
             renderGuestTable();
             return guest.qrCode;
+        }
+
+        function editGuest(id) {
+            const guest = guests.find(g => g.id === id);
+            if (guest) {
+                document.getElementById('edit-guest-id').value = guest.id;
+                document.getElementById('guest-name').value = guest.name;
+                // document.getElementById('guest-phone').value = guest.phone;
+                // document.getElementById('guest-category').value = guest.category;
+                // document.getElementById('guest-count').value = guest.count;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('guest-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addGuest();
+        });
+
+
+        // Guest management functions
+        function addGuest() {
+            const name = document.getElementById('guest-name').value;
+            // const phone = document.getElementById('guest-phone').value;
+            // const category = document.getElementById('guest-category').value;
+            // const count = parseInt(document.getElementById('guest-count').value);
+            const editId = document.getElementById('edit-guest-id').value;
+
+            if (!name.trim()) {
+                alert('Nama tamu harus diisi!');
+                return;
+            }
+
+            if (editId) {
+                // Edit existing guest
+                const guest = guests.find(g => g.id === editId);
+                if (guest) {
+                    // guest.name = name;
+                    // guest.phone = phone;
+                    // guest.category = category;
+                    // guest.count = count;
+
+              db.collection(collection).doc(editId).update({
+                name: name,
+                // phone: phone,
+                // category: category,
+                // count: count,
+              })
+                .then(() => {
+                    console.log('Task updated successfully!')
+                    resetForm();
+                    initializeData();
+                })
+                .catch((error) => {
+                    console.error('Error updating task:', error);
+                });
+
+                }
+            } else {
+                // // Add new guest
+                // const newGuest = {
+                //     // id: Date.now().toString(),
+                //     name: name,
+                //     phone: phone,
+                //     category: category,
+                //     count: count,
+                //     status: 'belum',
+                //     qrCode: null,
+                //     attendedAt: null
+                // };
+                // guests.push(newGuest);
+
+                // db.collection('guests').add(newGuest)
+                // .then((docRef) => {
+                //     // showStatus(`Task added successfully! ID: ${docRef.id}`);
+                //     // $('#taskForm')[0].reset();
+                //     // loadTasks(); // Refresh the list
+                // })
+                // .catch((error) => {
+                //     console.error('Error adding task:', error);
+                //     // showStatus('Error adding task: ' + error.message, 'error');
+                // });
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('guest-form').reset();
+            document.getElementById('edit-guest-id').value = '';
         }
 
         // Initialize the application
