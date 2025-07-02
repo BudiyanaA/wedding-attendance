@@ -301,7 +301,7 @@
                           };
                           console.log(`Guest found: ${guest.name}`);
 
-                          if (guest.status === 'hadir') {
+                          if (guest.status === 'hadir' && guest.category != 'group') {
                               showScanResult('warning', 'Tamu telah absen', `${guest.name} sudah melakukan absensi sebelumnya.`);
                               return;
                           }
@@ -407,6 +407,59 @@
             
             resultsDiv.innerHTML = html;
         }
+
+        function manualCheckIn(guestId) {
+            const guest = guests.find(g => g.id === guestId);
+            if (guest && guest.status === 'belum') {
+                guest.status = 'hadir';
+                guest.attendedAt = new Date().toLocaleString('id-ID');
+
+                db.collection(collection).doc(guestId).update({
+                  status: 'hadir',
+                  attendedAt: new Date().toLocaleString('id-ID'),
+                })
+                  .then(() => {
+                      console.log('Guest updated successfully!')
+                      // initializeData()
+                      alert(`${guest.name} berhasil diabsen secara manual.`);
+                  })
+                  .catch((error) => {
+                      console.error('Error updating guest:', error);
+                  });
+                
+                // updateDashboard();
+                // renderGuestList();
+                // searchGuest(); // Refresh search results
+            }
+        }
+
+        function resetAttendance(guestId) {
+            if (confirm('Yakin ingin mereset kehadiran tamu ini?')) {
+                const guest = guests.find(g => g.id === guestId);
+                if (guest) {
+                    guest.status = 'belum';
+                    guest.attendedAt = null;
+
+                    db.collection(collection).doc(guestId).update({
+                      status: 'belum',
+                      attendedAt: null,
+                    })
+                      .then(() => {
+                          console.log('Guest updated successfully!')
+                          // initializeData()
+                          alert(`Kehadiran ${guest.name} berhasil direset.`);
+                      })
+                      .catch((error) => {
+                          console.error('Error updating guest:', error);
+                      });
+                    
+                    // updateDashboard();
+                    // renderGuestList();
+                    // searchGuest(); // Refresh search results
+                }
+            }
+        }
+
 
         // Initialize the application
         function initApp() {

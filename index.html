@@ -359,8 +359,8 @@
         function manualCheckIn(guestId) {
             const guest = guests.find(g => g.id === guestId);
             if (guest && guest.status === 'belum') {
-                // guest.status = 'hadir';
-                // guest.attendedAt = new Date().toLocaleString('id-ID');
+                guest.status = 'hadir';
+                guest.attendedAt = new Date().toLocaleString('id-ID');
 
                 db.collection(collection).doc(guestId).update({
                   status: 'hadir',
@@ -368,7 +368,7 @@
                 })
                   .then(() => {
                       console.log('Guest updated successfully!')
-                      initializeData()
+                      // initializeData()
                       alert(`${guest.name} berhasil diabsen secara manual.`);
                   })
                   .catch((error) => {
@@ -385,8 +385,8 @@
             if (confirm('Yakin ingin mereset kehadiran tamu ini?')) {
                 const guest = guests.find(g => g.id === guestId);
                 if (guest) {
-                    // guest.status = 'belum';
-                    // guest.attendedAt = null;
+                    guest.status = 'belum';
+                    guest.attendedAt = null;
 
                     db.collection(collection).doc(guestId).update({
                       status: 'belum',
@@ -394,7 +394,7 @@
                     })
                       .then(() => {
                           console.log('Guest updated successfully!')
-                          initializeData()
+                          // initializeData()
                           alert(`Kehadiran ${guest.name} berhasil direset.`);
                       })
                       .catch((error) => {
