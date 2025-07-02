@@ -369,6 +369,8 @@
                   .then(() => {
                       console.log('Guest updated successfully!')
                       // initializeData()
+                      updateDashboard();
+                      renderGuestList();
                       alert(`${guest.name} berhasil diabsen secara manual.`);
                   })
                   .catch((error) => {
@@ -395,6 +397,8 @@
                       .then(() => {
                           console.log('Guest updated successfully!')
                           // initializeData()
+                          updateDashboard();
+                          renderGuestList();
                           alert(`Kehadiran ${guest.name} berhasil direset.`);
                       })
                       .catch((error) => {
