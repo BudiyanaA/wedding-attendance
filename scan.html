@@ -313,7 +313,7 @@
                             })
                               .then(() => {
                                   console.log('Guest updated successfully!')
-                                  showScanResult('success', 'Absensi berhasil!', `${guest.name} berhasil diabsen. Jumlah tamu: ${guest.pax} orang.`);
+                                  showScanResult('success', 'Absensi berhasil!', `${guest.name} berhasil diabsen.`);
                               })
                               .catch((error) => {
                                   console.error('Error updating guest:', error);
